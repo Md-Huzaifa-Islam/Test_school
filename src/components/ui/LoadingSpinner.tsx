@@ -29,7 +29,7 @@ export default function LoadingSpinner({
   size = "md",
   color = "primary",
   className,
-}: LoadingSpinnerProps): JSX.Element {
+}: LoadingSpinnerProps) {
   return (
     <div
       className={clsx(

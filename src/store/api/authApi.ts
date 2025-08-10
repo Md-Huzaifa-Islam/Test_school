@@ -8,7 +8,7 @@ import type {
   OTPData,
   ResetPasswordData,
 } from "@/types";
-import { RootState } from "./store";
+import { RootState } from "../store";
 
 // Base API configuration
 export const baseApi = createApi({

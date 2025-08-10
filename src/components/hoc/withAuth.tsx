@@ -12,10 +12,10 @@ interface WithAuthProps {
   children?: React.ReactNode;
 }
 
-export default function withAuth<P extends object>(
+export default function withAuth<P extends object = {}>(
   WrappedComponent: React.ComponentType<P>
 ) {
-  const AuthenticatedComponent = (props: P & WithAuthProps) => {
+  const AuthenticatedComponent = (props: P) => {
     const router = useRouter();
     const [isLoading, setIsLoading] = React.useState(true);
     const [isAuthenticated, setIsAuthenticated] = React.useState(false);

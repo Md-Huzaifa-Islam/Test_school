@@ -7,7 +7,7 @@ import Certificate from "@/models/Certificate";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -52,7 +52,18 @@ export async function POST(
 
     await connectDB();
 
-    const assessment = await Assessment.findById(params.id).populate("userId");
+    // Await params before using properties (Next.js 15 requirement)
+    const { id } = await params;
+
+    // Validate ObjectId
+    if (!id || id === "undefined" || id.length !== 24) {
+      return NextResponse.json(
+        { message: "Invalid assessment ID" },
+        { status: 400 }
+      );
+    }
+
+    const assessment = await Assessment.findById(id).populate("userId");
     if (!assessment) {
       return NextResponse.json(
         { message: "Assessment not found" },

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     // Check if admin user exists
     const adminUser = await User.findOne({ email: "admin@testschool.com" });
-    
+
     if (adminUser) {
       return NextResponse.json({
         success: true,
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Check if admin user already exists
     const existingAdmin = await User.findOne({ email: "admin@testschool.com" });
-    
+
     if (existingAdmin) {
       return NextResponse.json({
         success: true,
