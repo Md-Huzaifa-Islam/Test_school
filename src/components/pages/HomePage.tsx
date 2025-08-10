@@ -115,7 +115,7 @@ export default function HomePage(): React.JSX.Element {
           <div className="mt-6 text-center">
             <Link
               href="/admin/login"
-              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium rounded-lg text-blue-600 bg-white border-2 border-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
             >
               <Shield className="w-4 h-4 mr-1" />
               Admin Access
