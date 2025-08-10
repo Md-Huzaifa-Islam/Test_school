@@ -21,8 +21,9 @@ interface Assessment {
   step: number;
   status: string;
   timeLimit: number;
-  startTime?: string;
-  competencies: string[];
+  startedAt?: string;
+  levels: string[];
+  remainingTime?: number;
 }
 
 interface Answer {
@@ -87,7 +88,7 @@ export default function ExamInterface({
         if (data.assessment.status === "in_progress") {
           setStarted(true);
           // Calculate remaining time
-          const startTime = new Date(data.assessment.startTime).getTime();
+          const startTime = new Date(data.assessment.startedAt).getTime();
           const now = new Date().getTime();
           const elapsed = Math.floor((now - startTime) / 1000);
           const remaining = Math.max(
@@ -132,7 +133,7 @@ export default function ExamInterface({
   const startAssessment = async () => {
     try {
       setLoading(true);
-      await api.patch(`/assessments/${assessmentId}`, { action: "start" });
+      await api.post(`/assessments/${assessmentId}`, { action: "start" });
       setStarted(true);
       toast.success("Assessment started! Good luck!");
     } catch (error) {
@@ -169,17 +170,45 @@ export default function ExamInterface({
 
       const result = response.data.data;
 
-      toast.success(
-        result.results.certified
-          ? "Congratulations! You passed!"
-          : "Assessment completed. Keep practicing!"
-      );
+      // Check if user achieved a level or got a certificate
+      const passed = result.achievedLevel || result.certificateLevel;
+      const canProceed = result.canProceedToNext;
+
+      if (passed) {
+        if (result.certificateLevel) {
+          toast.success(
+            `🎉 Congratulations! You achieved ${result.certificateLevel} level certification!`
+          );
+        } else if (result.achievedLevel) {
+          toast.success(
+            `🎯 Great job! You reached ${result.achievedLevel} level!`
+          );
+        }
+
+        if (canProceed) {
+          toast.success(`✨ You can now proceed to the next assessment step!`);
+        }
+      } else {
+        toast.error(
+          `📚 Keep practicing! Score: ${result.percentage}% (Need 25% minimum)`
+        );
+      }
 
       // Redirect to results page or assessments page
       router.push(`/assessments?completed=${assessmentId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting assessment:", error);
-      toast.error("Failed to submit assessment");
+
+      // Check if it's already completed
+      if (
+        error.response?.status === 400 &&
+        error.response?.data?.message?.includes("already completed")
+      ) {
+        toast.success("Assessment already completed successfully!");
+        router.push(`/assessments?completed=${assessmentId}`);
+      } else {
+        toast.error("Failed to submit assessment. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -239,7 +268,7 @@ export default function ExamInterface({
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <span className="font-medium text-gray-700">Competencies:</span>
               <span className="text-gray-900">
-                {assessment.competencies.join(", ")}
+                {assessment.levels?.join(", ") || "N/A"}
               </span>
             </div>
           </div>
@@ -392,34 +421,58 @@ export default function ExamInterface({
                     )
                   }
                   disabled={currentQuestionIndex === 0}
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                 >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Previous
                 </button>
 
-                <div className="flex space-x-2">
-                  {questions.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentQuestionIndex(index)}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium ${
-                        index === currentQuestionIndex
-                          ? "bg-blue-600 text-white"
-                          : answers[questions[index]._id] !== undefined
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-                </div>
+                {/* Question pagination - only show if we have a reasonable number of questions */}
+                {questions.length <= 10 && (
+                  <div className="flex space-x-2">
+                    {questions.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentQuestionIndex(index)}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                          index === currentQuestionIndex
+                            ? "bg-blue-600 text-white shadow-md"
+                            : answers[questions[index]._id] !== undefined
+                            ? "bg-green-100 text-green-700 border border-green-300"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
+                        }`}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* For larger question sets, show a progress indicator */}
+                {questions.length > 10 && (
+                  <div className="text-center">
+                    <div className="text-sm text-gray-600 mb-1">
+                      Question {currentQuestionIndex + 1} of {questions.length}
+                    </div>
+                    <div className="w-48 bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${
+                            ((currentQuestionIndex + 1) / questions.length) *
+                            100
+                          }%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
 
                 {currentQuestionIndex === questions.length - 1 ? (
                   <button
                     onClick={handleSubmit}
                     disabled={submitting || Object.keys(answers).length === 0}
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center transition-colors"
                   >
                     <Send className="h-4 w-4 mr-2" />
                     {submitting ? "Submitting..." : "Submit Assessment"}
@@ -431,7 +484,7 @@ export default function ExamInterface({
                         Math.min(questions.length - 1, currentQuestionIndex + 1)
                       )
                     }
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Next
                   </button>

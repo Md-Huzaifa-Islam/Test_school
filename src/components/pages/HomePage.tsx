@@ -110,6 +110,17 @@ export default function HomePage(): React.JSX.Element {
               Sign In
             </Link>
           </div>
+
+          {/* Admin Access */}
+          <div className="mt-6 text-center">
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+            >
+              <Shield className="w-4 h-4 mr-1" />
+              Admin Access
+            </Link>
+          </div>
         </div>
 
         {/* Features Section */}

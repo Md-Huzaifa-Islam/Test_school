@@ -17,11 +17,12 @@ export default function MainLayout({
 }: MainLayoutProps): React.JSX.Element {
   const pathname = usePathname();
 
-  // Check if this is an auth page
+  // Check if this is an auth page or admin page
   const isAuthPage = pathname.startsWith("/auth");
+  const isAdminPage = pathname.startsWith("/admin");
 
-  // For auth pages, render without navigation or sidebar spacing
-  if (isAuthPage) {
+  // For auth pages or admin pages, render without regular navigation
+  if (isAuthPage || isAdminPage) {
     return <main className="min-h-screen">{children}</main>;
   }
 

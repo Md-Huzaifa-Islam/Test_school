@@ -195,16 +195,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Select 44 questions (22 from each level if available)
+    // Define target question counts for each step
+    const stepQuestionCounts = {
+      1: 20, // Step 1: A1-A2
+      2: 25, // Step 2: B1-B2
+      3: 30, // Step 3: C1-C2
+    };
+
+    const targetCount =
+      stepQuestionCounts[step as keyof typeof stepQuestionCounts];
+
+    // Select questions proportionally from each level, up to available questions
     const selectedQuestions: any[] = [];
+    const questionsPerLevel = Math.ceil(targetCount / levels.length);
 
     for (const level of levels) {
       const levelQuestions = allQuestions.filter((q) => q.level === level);
-      const questionsToTake = Math.min(22, levelQuestions.length);
+      const questionsToTake = Math.min(
+        questionsPerLevel,
+        levelQuestions.length
+      );
 
       // Randomly select questions
       const shuffled = levelQuestions.sort(() => 0.5 - Math.random());
       selectedQuestions.push(...shuffled.slice(0, questionsToTake));
+    }
+
+    // If we don't have enough questions, use all available questions
+    if (selectedQuestions.length < targetCount) {
+      console.log(
+        `Warning: Only ${selectedQuestions.length} questions available for step ${step}, target was ${targetCount}`
+      );
     }
 
     // Shuffle the final question set

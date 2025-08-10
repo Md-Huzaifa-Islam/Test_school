@@ -25,8 +25,8 @@ export default function Navigation(): React.JSX.Element {
   const isAuthenticated = !!user;
   const [sidebarOpen, setSidebarOpen] = React.useState<boolean>(false);
 
-  // Don't show navigation on auth pages
-  if (pathname.startsWith("/auth")) {
+  // Don't show navigation on auth pages or admin pages
+  if (pathname.startsWith("/auth") || pathname.startsWith("/admin")) {
     return <></>;
   }
 

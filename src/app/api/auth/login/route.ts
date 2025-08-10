@@ -11,6 +11,13 @@ export async function POST(request: NextRequest) {
     const body: LoginRequest = await request.json();
     const { email, password } = body;
 
+    // Debug logging
+    console.log("Login attempt:", {
+      email,
+      passwordLength: password?.length,
+      password: password?.substring(0, 3) + "...",
+    });
+
     // Validate input
     if (!email || !password) {
       return NextResponse.json(
@@ -30,6 +37,11 @@ export async function POST(request: NextRequest) {
 
     // Check password
     const isPasswordValid = await user.comparePassword(password);
+    console.log("Password validation:", {
+      email,
+      isPasswordValid,
+      receivedPassword: password,
+    });
     if (!isPasswordValid) {
       return NextResponse.json(
         { success: false, message: "Invalid email or password" },
